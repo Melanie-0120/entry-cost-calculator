@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entry Cost Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F6;
+    --panel:#FFFFFF;
+    --navy:#10233F;
+    --navy-2:#1B3A63;
+    --brass:#B4884B;
+    --brass-dark:#95763a;
+    --ink:#1C2230;
+    --muted:#667085;
+    --success:#1F7A4D;
+    --line:#D8DEE9;
+    --danger:#B3432E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 24px 20px;
+  }
+  header.top .inner{
+    max-width:1080px;
+    margin:0 auto;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  header.top h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  header.top p{
+    margin:0;
+    font-size:13px;
+    color:#A9BBD6;
+  }
+  main{
+    max-width:1080px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+    display:grid;
+    grid-template-columns:380px 1fr;
+    gap:24px;
+    align-items:start;
+  }
+  @media (max-width:860px){
+    main{grid-template-columns:1fr;}
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px;
+  }
+  .form-card{position:sticky; top:20px;}
+  @media (max-width:860px){ .form-card{position:static;} }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    margin-bottom:6px;
+  }
+  .field input[type=number]{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    font-weight:500;
+    color:var(--ink);
+    background:#FBFCFE;
+  }
+  .field input[type=number]:focus{
+    outline:2px solid var(--navy-2);
+    outline-offset:1px;
+  }
+  .field .prefix-wrap{position:relative;}
+  .field .prefix-wrap span{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    color:var(--muted);
+  }
+  .field .prefix-wrap input{padding-left:38px;}
+  .toggle-row{display:flex; gap:8px;}
+  .toggle-btn{
+    flex:1;
+    padding:9px 6px;
+    border:1px solid var(--line);
+    background:#FBFCFE;
+    border-radius:7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--navy);
+    cursor:pointer;
+  }
+  .toggle-btn.active{
+    background:var(--navy);
+    color:#fff;
+    border-color:var(--navy);
+  }
+  .calc-btn{
+    width:100%;
+    padding:13px;
+    background:var(--brass);
+    color:#fff;
+    border:none;
+    border-radius:7px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    cursor:pointer;
+    margin-top:6px;
+    letter-spacing:0.02em;
+  }
+  .calc-btn:hover{background:#a17840;}
+  .hint{font-size:12px; color:var(--muted); margin-top:4px;}
+
+  /* Receipt style result panel */
+  .receipt{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px 10px 0 0;
+    padding:26px 26px 20px;
+    position:relative;
+  }
+  .receipt-tear{
+    height:14px;
+    background:
+      linear-gradient(135deg, var(--bg) 50%, transparent 50%) 0 0,
+      linear-gradient(45deg, var(--bg) 50%, transparent 50%) 0 0;
+    background-size:14px 14px;
+    background-repeat:repeat-x;
+    background-color:var(--panel);
+    margin-top:-1px;
+  }
+  .receipt h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:17px;
+    margin:0 0 4px;
+    color:var(--navy);
+  }
+  .receipt .sub{font-size:12px; color:var(--muted); margin-bottom:18px;}
+  .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:7px 0;
+    font-size:14px;
+    border-bottom:1px dashed var(--line);
+  }
+  .row .lbl{color:var(--muted);}
+  .row .val{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .section-label{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--brass);
+    margin:20px 0 6px;
+    font-weight:600;
+  }
+  .row.total{
+    border-bottom:none;
+    border-top:2px solid var(--navy);
+    margin-top:8px;
+    padding-top:12px;
+    font-size:16px;
+  }
+  .row.total .lbl{color:var(--navy); font-weight:600;}
+  .row.total .val{color:var(--navy); font-size:17px;}
+  .row.grand{
+    border-top:3px double var(--success);
+    margin-top:10px;
+    padding-top:14px;
+  }
+  .row.grand .lbl{color:var(--success); font-weight:700; font-size:14.5px;}
+  .row.grand .val{color:var(--success); font-size:19px; font-weight:700;}
+  .empty-state{
+    padding:60px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+  }
+  .copy-btn{
+    flex:1;
+    padding:10px;
+    background:var(--navy);
+    color:#fff;
+    border:none;
+    border-radius:7px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .copy-btn:hover{background:var(--navy-2);}
+  .copy-btn.copied{background:var(--success);}
+
+  /* Modal */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(16,35,63,0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:#fff;
+    border-radius:10px;
+    padding:26px;
+    max-width:360px;
+    width:100%;
+  }
+  .modal h3{
+    font-family:'Space Grotesk',sans-serif;
+    margin:0 0 8px;
+    font-size:17px;
+    color:var(--navy);
+  }
+  .modal p{
+    font-size:13.5px;
+    color:var(--muted);
+    margin:0 0 16px;
+    line-height:1.5;
+  }
+  .modal input{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    margin-bottom:16px;
+  }
+  .modal-actions{display:flex; gap:10px;}
+  .modal-actions button{
+    flex:1;
+    padding:10px;
+    border-radius:7px;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+    border:1px solid var(--line);
+  }
+  .modal-actions .confirm{
+    background:var(--brass);
+    color:#fff;
+    border:none;
+  }
+  .modal-actions .cancel{
+    background:#fff;
+    color:var(--muted);
+  }
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:var(--muted);
+    padding:24px 20px 40px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <h1>Entry Cost Calculator</h1>
+    <p>Quick property entry-cost estimates for agents</p>
+  </div>
+</header>
+
+<main>
+  <div class="card form-card">
+    <div class="field">
+      <label for="sellingPrice">Selling Price</label>
+      <div class="prefix-wrap">
+        <span>RM</span>
+        <input type="number" id="sellingPrice" value="" min="0" step="1000" placeholder="For summary text only">
+      </div>
+      <p class="hint">Not used in any calculation — only included in the copy-text output.</p>
+    </div>
+
+    <div class="field">
+      <label for="propertyValue">Property Value</label>
+      <div class="prefix-wrap">
+        <span>RM</span>
+        <input type="number" id="propertyValue" value="550000" min="0" step="1000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Loan Margin</label>
+      <div class="toggle-row">
+        <button type="button" class="toggle-btn active" data-margin="90">90%</button>
+        <button type="button" class="toggle-btn" data-margin="95">95%</button>
+        <button type="button" class="toggle-btn" data-margin="custom">Custom</button>
+      </div>
+      <div class="prefix-wrap" id="customMarginWrap" style="display:none; margin-top:8px;">
+        <input type="number" id="customMargin" placeholder="Enter %" min="0" max="100">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="interestRate">Interest Rate (%)</label>
+      <input type="number" id="interestRate" value="4.00" min="0" step="0.01">
+    </div>
+
+    <div class="field">
+      <label for="tenure">Loan Tenure (years)</label>
+      <input type="number" id="tenure" value="35" min="1" max="40" step="1">
+    </div>
+
+    <div class="field">
+      <label for="miscCost">Misc Cost (optional)</label>
+      <div class="prefix-wrap">
+        <span>RM</span>
+        <input type="number" id="miscCost" value="0" min="0" step="10">
+      </div>
+    </div>
+
+    <button class="calc-btn" id="calcBtn">Calculate</button>
+    <p class="hint">You'll be asked to confirm the legal fee amount before each calculation.</p>
+  </div>
+
+  <div>
+    <div class="receipt" id="receiptCard">
+      <div class="empty-state" id="emptyState">Enter the details on the left and press Calculate to see the entry cost breakdown.</div>
+      <div id="results" style="display:none;">
+        <h2>Entry Cost Summary</h2>
+        <div class="sub" id="resultTimestamp"></div>
+
+        <div class="row"><span class="lbl">Selling Price</span><span class="val" id="r_sellingPrice"></span></div>
+        <div class="row"><span class="lbl">Property Value</span><span class="val" id="r_propertyValue"></span></div>
+        <div class="row"><span class="lbl">Loan Amount</span><span class="val" id="r_loanAmount"></span></div>
+        <div class="row"><span class="lbl">Loan Margin</span><span class="val" id="r_margin"></span></div>
+        <div class="row"><span class="lbl">Down Payment</span><span class="val" id="r_downPayment"></span></div>
+        <div class="row"><span class="lbl">Interest Rate</span><span class="val" id="r_interest"></span></div>
+        <div class="row"><span class="lbl">Tenure</span><span class="val" id="r_tenure"></span></div>
+        <div class="row"><span class="lbl">Monthly Payment</span><span class="val" id="r_monthly"></span></div>
+
+        <div class="section-label">Incidental Costs</div>
+        <div class="row"><span class="lbl">Valuation Fee</span><span class="val" id="r_valuation"></span></div>
+        <div class="row"><span class="lbl">Legal Fee (SPA)</span><span class="val" id="r_legalSpa"></span></div>
+        <div class="row"><span class="lbl">Stamp Duty (MOT)</span><span class="val" id="r_stampMot"></span></div>
+        <div class="row"><span class="lbl">Legal Fee (Loan)</span><span class="val" id="r_legalLoan"></span></div>
+        <div class="row"><span class="lbl">Stamp Duty (Loan)</span><span class="val" id="r_stampLoan"></span></div>
+        <div class="row"><span class="lbl">Misc Cost</span><span class="val" id="r_misc"></span></div>
+        <div class="row total"><span class="lbl">Total Incidental Cost</span><span class="val" id="r_totalIncidental"></span></div>
+        <div class="row total"><span class="lbl">Total Entry Cost</span><span class="val" id="r_totalEntry"></span></div>
+
+        <div class="section-label">Additional Summary</div>
+        <div class="row"><span class="lbl">Legal Fee (confirmed)</span><span class="val" id="r_confirmedLegalFee"></span></div>
+        <div class="row grand"><span class="lbl">Total (for agent)</span><span class="val" id="r_cashRequired"></span></div>
+
+        <div class="section-label">Client Summary (Preview)</div>
+        <pre id="clientSummaryPreview" style="font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.6; white-space:pre-wrap; background:#FBFCFE; border:1px solid var(--line); border-radius:7px; padding:14px; margin:0;"></pre>
+
+        <div class="actions">
+          <button class="copy-btn" id="copyBtn">Copy Summary</button>
+          <button class="copy-btn" id="copyClientBtn">Copy Client Summary</button>
+        </div>
+      </div>
+    </div>
+    <div class="receipt-tear" id="tear" style="display:none;"></div>
+  </div>
+</main>
+
+<footer>Estimates only — final figures are subject to bank, lawyer and government confirmation.</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>Confirm Legal Fee</h3>
+    <p>The legal fee is currently set at RM2,000. Please confirm or update this amount before calculating.</p>
+    <input type="number" id="legalFeeInput" value="2000" min="0" step="50">
+    <div class="modal-actions">
+      <button class="cancel" id="modalCancel">Cancel</button>
+      <button class="confirm" id="modalConfirm">Confirm &amp; Calculate</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function fmt(n){
+  return 'RM' + n.toLocaleString('en-MY', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+// ---- Fee calculation helpers ----
+function progressiveFee(amount, bounds, rates){
+  let remaining = amount;
+  let prev = 0;
+  let fee = 0;
+  for(let i=0; i<bounds.length; i++){
+    if(remaining <= 0) break;
+    const bandCap = bounds[i] - prev;
+    const bandAmt = Math.min(remaining, bandCap);
+    fee += bandAmt * rates[i];
+    remaining -= bandAmt;
+    prev = bounds[i];
+  }
+  return fee;
+}
+
+function calcValuationFee(value){
+  const bounds = [100000, 2000000, 7000000, 15000000, 50000000, 200000000, 500000000, Infinity];
+  const rates  = [0.0025, 0.0020, 0.001667, 0.00125, 0.0010, 0.000667, 0.0005, 0.0004];
+  const base = progressiveFee(value, bounds, rates);
+  return (base + 500) * 1.08;
+}
+
+function calcLegalFeeSpa(value){
+  const firstTierBase = Math.min(value, 500000);
+  let firstTierFee = firstTierBase * 0.0125;
+  if(firstTierFee < 500) firstTierFee = 500;
+  const secondTierFee = Math.max(value - 500000, 0) * 0.01;
+  const base = firstTierFee + secondTierFee;
+  return (base + 2500) * 1.08;
+}
+
+function calcLegalFeeLoan(loanAmount){
+  const firstTierBase = Math.min(loanAmount, 500000);
+  let firstTierFee = firstTierBase * 0.0125;
+  if(firstTierFee < 500) firstTierFee = 500;
+  const secondTierFee = Math.max(loanAmount - 500000, 0) * 0.01;
+  const base = firstTierFee + secondTierFee;
+  return (base + 2500) * 1.08;
+}
+
+function calcStampDutyMot(value){
+  const bounds = [100000, 500000, 1000000, Infinity];
+  const rates  = [0.01, 0.02, 0.03, 0.04];
+  return progressiveFee(value, bounds, rates);
+}
+
+function calcStampDutyLoan(loanAmount){
+  return loanAmount * 0.005;
+}
+
+function calcMonthlyPayment(principal, annualRatePct, years){
+  const r = (annualRatePct / 100) / 12;
+  const n = years * 12;
+  if(n <= 0) return 0;
+  if(r === 0) return principal / n;
+  const factor = Math.pow(1 + r, n);
+  return principal * r * factor / (factor - 1);
+}
+
+// ---- Margin toggle ----
+let selectedMargin = 90;
+const toggleBtns = document.querySelectorAll('.toggle-btn');
+const customMarginWrap = document.getElementById('customMarginWrap');
+const customMarginInput = document.getElementById('customMargin');
+
+toggleBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    toggleBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if(btn.dataset.margin === 'custom'){
+      customMarginWrap.style.display = 'block';
+      selectedMargin = parseFloat(customMarginInput.value) || 0;
+    } else {
+      customMarginWrap.style.display = 'none';
+      selectedMargin = parseFloat(btn.dataset.margin);
+    }
+  });
+});
+customMarginInput.addEventListener('input', () => {
+  selectedMargin = parseFloat(customMarginInput.value) || 0;
+});
+
+// ---- Modal flow ----
+const modalOverlay = document.getElementById('modalOverlay');
+const legalFeeInput = document.getElementById('legalFeeInput');
+
+document.getElementById('calcBtn').addEventListener('click', () => {
+  legalFeeInput.value = 2000;
+  modalOverlay.classList.add('open');
+});
+document.getElementById('modalCancel').addEventListener('click', () => {
+  modalOverlay.classList.remove('open');
+});
+document.getElementById('modalConfirm').addEventListener('click', () => {
+  const confirmedLegalFee = parseFloat(legalFeeInput.value) || 0;
+  modalOverlay.classList.remove('open');
+  runCalculation(confirmedLegalFee);
+});
+
+// ---- Main calculation ----
+function runCalculation(confirmedLegalFee){
+  const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
+  const propertyValue = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
+  const tenure = parseFloat(document.getElementById('tenure').value) || 0;
+  const miscCost = parseFloat(document.getElementById('miscCost').value) || 0;
+  const margin = selectedMargin;
+
+  const loanAmount = propertyValue * (margin / 100);
+  const downPayment = propertyValue - loanAmount;
+  const monthly = calcMonthlyPayment(loanAmount, interestRate, tenure);
+
+  const valuationFee = calcValuationFee(propertyValue);
+  const legalSpa = calcLegalFeeSpa(propertyValue);
+  const stampMot = calcStampDutyMot(propertyValue);
+  const legalLoan = calcLegalFeeLoan(loanAmount);
+  const stampLoan = calcStampDutyLoan(loanAmount);
+
+  const totalIncidental = valuationFee + legalSpa + stampMot + legalLoan + stampLoan + miscCost;
+  const totalEntry = downPayment + totalIncidental;
+
+  const cashRequired = downPayment + totalIncidental + confirmedLegalFee + valuationFee;
+
+  const agentFeeRate = 0.01;
+  const agentFee = sellingPrice * agentFeeRate * 1.08;
+  const legalFeeAggregate = legalSpa + legalLoan + stampLoan + stampMot + valuationFee + confirmedLegalFee;
+  const clientTotal = downPayment + legalFeeAggregate + valuationFee + agentFee;
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('tear').style.display = 'block';
+
+  document.getElementById('resultTimestamp').textContent = 'Calculated ' + new Date().toLocaleString('en-MY');
+  document.getElementById('r_sellingPrice').textContent = sellingPrice > 0 ? fmt(sellingPrice) : '—';
+  document.getElementById('r_propertyValue').textContent = fmt(propertyValue);
+  document.getElementById('r_loanAmount').textContent = fmt(loanAmount);
+  document.getElementById('r_margin').textContent = margin + '%';
+  document.getElementById('r_downPayment').textContent = fmt(downPayment);
+  document.getElementById('r_interest').textContent = interestRate.toFixed(2) + '%';
+  document.getElementById('r_tenure').textContent = tenure + ' years';
+  document.getElementById('r_monthly').textContent = fmt(Math.round(monthly));
+
+  document.getElementById('r_valuation').textContent = fmt(Math.round(valuationFee));
+  document.getElementById('r_legalSpa').textContent = fmt(Math.round(legalSpa));
+  document.getElementById('r_stampMot').textContent = fmt(Math.round(stampMot));
+  document.getElementById('r_legalLoan').textContent = fmt(Math.round(legalLoan));
+  document.getElementById('r_stampLoan').textContent = fmt(Math.round(stampLoan));
+  document.getElementById('r_misc').textContent = fmt(Math.round(miscCost));
+  document.getElementById('r_totalIncidental').textContent = fmt(Math.round(totalIncidental));
+  document.getElementById('r_totalEntry').textContent = fmt(Math.round(totalEntry));
+
+  document.getElementById('r_confirmedLegalFee').textContent = fmt(Math.round(confirmedLegalFee));
+  document.getElementById('r_cashRequired').textContent = fmt(Math.round(cashRequired));
+
+  window._lastResult = {
+    sellingPrice, propertyValue, loanAmount, margin, downPayment, interestRate, tenure, monthly,
+    valuationFee, legalSpa, stampMot, legalLoan, stampLoan, miscCost,
+    totalIncidental, totalEntry, confirmedLegalFee, cashRequired,
+    agentFee, legalFeeAggregate, clientTotal
+  };
+
+  document.getElementById('clientSummaryPreview').textContent = buildClientSummaryText(window._lastResult);
+}
+
+function buildClientSummaryText(r){
+  return (
+`Selling Price ：${fmt(r.sellingPrice)}
+Bank Value：${fmt(r.propertyValue)}
+Loan ${r.margin}% = ${fmt(Math.round(r.loanAmount))}
+
+Downpayment ：RM ${Math.round(r.downPayment).toLocaleString('en-MY')}
+Legal Fee ：RM ${Math.round(r.legalFeeAggregate).toLocaleString('en-MY')}
+Valuation Fee ：${fmt(Math.round(r.valuationFee))}
+Agent Fee +sst ：${fmt(Math.round(r.agentFee))}
+
+Total：RM ${Math.round(r.clientTotal).toLocaleString('en-MY')}
+RM ${Math.round(r.monthly).toLocaleString('en-MY')}/month
+${r.interestRate.toFixed(2)}% interest ${r.tenure}years`
+  );
+}
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const r = window._lastResult;
+  if(!r) return;
+  const text =
+`Entry Cost Summary
+${r.sellingPrice > 0 ? 'Selling Price: ' + fmt(r.sellingPrice) + '\n' : ''}Property Value: ${fmt(r.propertyValue)}
+Loan Amount (${r.margin}%): ${fmt(r.loanAmount)}
+Down Payment: ${fmt(r.downPayment)}
+Interest Rate: ${r.interestRate.toFixed(2)}%
+Tenure: ${r.tenure} years
+Monthly Payment: ${fmt(Math.round(r.monthly))}
+
+Valuation Fee: ${fmt(Math.round(r.valuationFee))}
+Legal Fee (SPA): ${fmt(Math.round(r.legalSpa))}
+Stamp Duty (MOT): ${fmt(Math.round(r.stampMot))}
+Legal Fee (Loan): ${fmt(Math.round(r.legalLoan))}
+Stamp Duty (Loan): ${fmt(Math.round(r.stampLoan))}
+Misc Cost: ${fmt(Math.round(r.miscCost))}
+Total Incidental Cost: ${fmt(Math.round(r.totalIncidental))}
+Total Entry Cost: ${fmt(Math.round(r.totalEntry))}
+
+Legal Fee (confirmed): ${fmt(Math.round(r.confirmedLegalFee))}
+Total (for agent): ${fmt(Math.round(r.cashRequired))}`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 1800);
+  });
+});
+
+document.getElementById('copyClientBtn').addEventListener('click', () => {
+  const r = window._lastResult;
+  if(!r) return;
+  const text = buildClientSummaryText(r);
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyClientBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Client Summary'; btn.classList.remove('copied'); }, 1800);
+  });
+});
+</script>
+
+</body>
+</html>
