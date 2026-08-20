@@ -37,10 +37,25 @@
     max-width:1080px;
     margin:0 auto;
     display:flex;
-    align-items:baseline;
+    align-items:center;
     justify-content:space-between;
     flex-wrap:wrap;
-    gap:6px;
+    gap:12px;
+  }
+  header.top .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  header.top .brand img{
+    height:44px;
+    width:auto;
+    display:block;
+  }
+  header.top .brand .text{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
   }
   header.top h1{
     font-family:'Space Grotesk',sans-serif;
@@ -306,8 +321,13 @@
 
 <header class="top">
   <div class="inner">
-    <h1>Entry Cost Calculator</h1>
-    <p>Quick property entry-cost estimates for agents</p>
+    <div class="brand">
+      <img src="logo.png" alt="Logo">
+      <div class="text">
+        <h1>Entry Cost Calculator</h1>
+        <p>Quick property entry-cost estimates for agents</p>
+      </div>
+    </div>
   </div>
 </header>
 
