@@ -398,7 +398,6 @@
         <pre id="clientSummaryPreview" style="font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.6; white-space:pre-wrap; background:#FBFCFE; border:1px solid var(--line); border-radius:7px; padding:14px; margin:0;"></pre>
 
         <div class="actions">
-          <button class="copy-btn" id="copyBtn">Copy Summary</button>
           <button class="copy-btn" id="copyClientBtn">Copy Client Summary</button>
         </div>
       </div>
@@ -608,38 +607,6 @@ RM ${Math.round(r.monthly).toLocaleString('en-MY')}/month
 ${r.interestRate.toFixed(2)}% interest ${r.tenure}years`
   );
 }
-
-document.getElementById('copyBtn').addEventListener('click', () => {
-  const r = window._lastResult;
-  if(!r) return;
-  const text =
-`Entry Cost Summary
-${r.sellingPrice > 0 ? 'Selling Price: ' + fmt(r.sellingPrice) + '\n' : ''}Property Value: ${fmt(r.propertyValue)}
-Loan Amount (${r.margin}%): ${fmt(r.loanAmount)}
-Down Payment: ${fmt(r.downPayment)}
-Interest Rate: ${r.interestRate.toFixed(2)}%
-Tenure: ${r.tenure} years
-Monthly Payment: ${fmt(Math.round(r.monthly))}
-
-Valuation Fee: ${fmt(Math.round(r.valuationFee))}
-Legal Fee (SPA): ${fmt(Math.round(r.legalSpa))}
-Stamp Duty (MOT): ${fmt(Math.round(r.stampMot))}
-Legal Fee (Loan): ${fmt(Math.round(r.legalLoan))}
-Stamp Duty (Loan): ${fmt(Math.round(r.stampLoan))}
-Misc Cost: ${fmt(Math.round(r.miscCost))}
-Total Incidental Cost: ${fmt(Math.round(r.totalIncidental))}
-Total Entry Cost: ${fmt(Math.round(r.totalEntry))}
-
-Legal Fee (confirmed): ${fmt(Math.round(r.confirmedLegalFee))}
-Total (for agent): ${fmt(Math.round(r.cashRequired))}`;
-
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 1800);
-  });
-});
 
 document.getElementById('copyClientBtn').addEventListener('click', () => {
   const r = window._lastResult;
