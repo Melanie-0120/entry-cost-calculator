@@ -319,7 +319,7 @@
         <span>RM</span>
         <input type="number" id="sellingPrice" value="" min="0" step="1000" placeholder="For summary text only">
       </div>
-      <p class="hint">Not used in any calculation — only included in the copy-text output.</p>
+      <p class="hint">Used to calculate Down Payment (Selling Price − Loan Amount). Leave blank to use Property Value instead.</p>
     </div>
 
     <div class="field">
@@ -536,7 +536,8 @@ function runCalculation(confirmedLegalFee){
   const margin = selectedMargin;
 
   const loanAmount = propertyValue * (margin / 100);
-  const downPayment = propertyValue - loanAmount;
+  const downPaymentBasis = sellingPrice > 0 ? sellingPrice : propertyValue;
+  const downPayment = downPaymentBasis - loanAmount;
   const monthly = calcMonthlyPayment(loanAmount, interestRate, tenure);
 
   const valuationFee = calcValuationFee(propertyValue);
