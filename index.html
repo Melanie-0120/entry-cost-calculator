@@ -314,6 +314,15 @@
 <main>
   <div class="card form-card">
     <div class="field">
+      <label for="sellingPrice">Selling Price</label>
+      <div class="prefix-wrap">
+        <span>RM</span>
+        <input type="number" id="sellingPrice" value="" min="0" step="1000" placeholder="For summary text only">
+      </div>
+      <p class="hint">Not used in any calculation — only included in the copy-text output.</p>
+    </div>
+
+    <div class="field">
       <label for="propertyValue">Property Value</label>
       <div class="prefix-wrap">
         <span>RM</span>
@@ -362,6 +371,7 @@
         <h2>Entry Cost Summary</h2>
         <div class="sub" id="resultTimestamp"></div>
 
+        <div class="row"><span class="lbl">Selling Price</span><span class="val" id="r_sellingPrice"></span></div>
         <div class="row"><span class="lbl">Property Value</span><span class="val" id="r_propertyValue"></span></div>
         <div class="row"><span class="lbl">Loan Amount</span><span class="val" id="r_loanAmount"></span></div>
         <div class="row"><span class="lbl">Loan Margin</span><span class="val" id="r_margin"></span></div>
@@ -384,8 +394,12 @@
         <div class="row"><span class="lbl">Legal Fee (confirmed)</span><span class="val" id="r_confirmedLegalFee"></span></div>
         <div class="row grand"><span class="lbl">Total (for agent)</span><span class="val" id="r_cashRequired"></span></div>
 
+        <div class="section-label">Client Summary (Preview)</div>
+        <pre id="clientSummaryPreview" style="font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.6; white-space:pre-wrap; background:#FBFCFE; border:1px solid var(--line); border-radius:7px; padding:14px; margin:0;"></pre>
+
         <div class="actions">
           <button class="copy-btn" id="copyBtn">Copy Summary</button>
+          <button class="copy-btn" id="copyClientBtn">Copy Client Summary</button>
         </div>
       </div>
     </div>
@@ -445,7 +459,11 @@ function calcLegalFeeSpa(value){
 }
 
 function calcLegalFeeLoan(loanAmount){
-  const base = loanAmount * 0.01;
+  const firstTierBase = Math.min(loanAmount, 500000);
+  let firstTierFee = firstTierBase * 0.0125;
+  if(firstTierFee < 500) firstTierFee = 500;
+  const secondTierFee = Math.max(loanAmount - 500000, 0) * 0.01;
+  const base = firstTierFee + secondTierFee;
   return (base + 2500) * 1.08;
 }
 
@@ -510,6 +528,7 @@ document.getElementById('modalConfirm').addEventListener('click', () => {
 
 // ---- Main calculation ----
 function runCalculation(confirmedLegalFee){
+  const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
   const propertyValue = parseFloat(document.getElementById('propertyValue').value) || 0;
   const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
   const tenure = parseFloat(document.getElementById('tenure').value) || 0;
@@ -531,11 +550,17 @@ function runCalculation(confirmedLegalFee){
 
   const cashRequired = downPayment + totalIncidental + confirmedLegalFee + valuationFee;
 
+  const agentFeeRate = 0.01;
+  const agentFee = sellingPrice * agentFeeRate * 1.08;
+  const legalFeeAggregate = legalSpa + legalLoan + stampLoan + stampMot + valuationFee + confirmedLegalFee;
+  const clientTotal = downPayment + legalFeeAggregate + valuationFee + agentFee;
+
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('results').style.display = 'block';
   document.getElementById('tear').style.display = 'block';
 
   document.getElementById('resultTimestamp').textContent = 'Calculated ' + new Date().toLocaleString('en-MY');
+  document.getElementById('r_sellingPrice').textContent = sellingPrice > 0 ? fmt(sellingPrice) : '—';
   document.getElementById('r_propertyValue').textContent = fmt(propertyValue);
   document.getElementById('r_loanAmount').textContent = fmt(loanAmount);
   document.getElementById('r_margin').textContent = margin + '%';
@@ -557,10 +582,30 @@ function runCalculation(confirmedLegalFee){
   document.getElementById('r_cashRequired').textContent = fmt(Math.round(cashRequired));
 
   window._lastResult = {
-    propertyValue, loanAmount, margin, downPayment, interestRate, tenure, monthly,
+    sellingPrice, propertyValue, loanAmount, margin, downPayment, interestRate, tenure, monthly,
     valuationFee, legalSpa, stampMot, legalLoan, stampLoan, miscCost,
-    totalIncidental, totalEntry, confirmedLegalFee, cashRequired
+    totalIncidental, totalEntry, confirmedLegalFee, cashRequired,
+    agentFee, legalFeeAggregate, clientTotal
   };
+
+  document.getElementById('clientSummaryPreview').textContent = buildClientSummaryText(window._lastResult);
+}
+
+function buildClientSummaryText(r){
+  return (
+`Selling Price ：${fmt(r.sellingPrice)}
+Bank Value：${fmt(r.propertyValue)}
+Loan ${r.margin}% = ${fmt(Math.round(r.loanAmount))}
+
+Downpayment ：RM ${Math.round(r.downPayment).toLocaleString('en-MY')}
+Legal Fee ：RM ${Math.round(r.legalFeeAggregate).toLocaleString('en-MY')}
+Valuation Fee ：${fmt(Math.round(r.valuationFee))}
+Agent Fee +sst ：${fmt(Math.round(r.agentFee))}
+
+Total：RM ${Math.round(r.clientTotal).toLocaleString('en-MY')}
+RM ${Math.round(r.monthly).toLocaleString('en-MY')}/month
+${r.interestRate.toFixed(2)}% interest ${r.tenure}years`
+  );
 }
 
 document.getElementById('copyBtn').addEventListener('click', () => {
@@ -568,7 +613,7 @@ document.getElementById('copyBtn').addEventListener('click', () => {
   if(!r) return;
   const text =
 `Entry Cost Summary
-Property Value: ${fmt(r.propertyValue)}
+${r.sellingPrice > 0 ? 'Selling Price: ' + fmt(r.sellingPrice) + '\n' : ''}Property Value: ${fmt(r.propertyValue)}
 Loan Amount (${r.margin}%): ${fmt(r.loanAmount)}
 Down Payment: ${fmt(r.downPayment)}
 Interest Rate: ${r.interestRate.toFixed(2)}%
@@ -592,6 +637,18 @@ Total (for agent): ${fmt(Math.round(r.cashRequired))}`;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 1800);
+  });
+});
+
+document.getElementById('copyClientBtn').addEventListener('click', () => {
+  const r = window._lastResult;
+  if(!r) return;
+  const text = buildClientSummaryText(r);
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyClientBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Client Summary'; btn.classList.remove('copied'); }, 1800);
   });
 });
 </script>
